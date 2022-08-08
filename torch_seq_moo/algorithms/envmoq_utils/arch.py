@@ -52,12 +52,12 @@ class EnvMOQTransformer(nn.Module):
         # mask for take max over actions and weights
         prod = prod.view(-1, self.num_actions * w_num)
         inds = prod.max(1)[1]
-        mask = ByteTensor(prod.size()).zero_()
+        mask = torch.ByteTensor(prod.size()).zero_().to(prod.device)
         mask.scatter_(1, inds.data.unsqueeze(1), 1)
         mask = mask.view(-1, 1).repeat(1, self.num_obj)
 
         # get the HQ
-        HQ = reQ_ext.masked_select(Variable(mask)).view(-1, self.num_obj)
+        HQ = reQ_ext.masked_select(mask).view(-1, self.num_obj)
 
         return HQ
 
