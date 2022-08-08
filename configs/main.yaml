@@ -1,0 +1,26 @@
+defaults:
+  - task: regex
+  - algorithm: mogfn
+  - tokenizer: protein
+
+seed: ${trial_id}
+trial_id: 0
+project_name: torch_seq_moo
+version: v0.0.1
+
+# Directories for loading and storing data
+data_dir: /home/mila/m/moksh.jain/scratch/lambo
+exp_name: test
+group_name: somedetails
+exp_tags: []
+job_name: null
+timestamp: ${now:%Y-%m-%d_%H-%M-%S}
+log_dir: ${data_dir}/${exp_name}
+wandb_mode: disabled
+
+hydra:
+  run:
+    dir: ${log_dir}
+  sweep:
+    dir: ${log_dir}
+    subdir: .
