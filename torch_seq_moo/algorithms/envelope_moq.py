@@ -183,21 +183,24 @@ class EnvelopeMOQ(BaseAlgorithm):
             active_mask = torch.where(active_mask, actions != 0, active_mask)
             
             next_x = torch.cat((x, actions_apply.unsqueeze(0)), axis=0)
-            
-            for i in range(len(active_mask)):
-                if active_mask[i] == 1:
-                    if actions[i] == 0:
-                        rewards[i] = task.score(tokens_to_str(x.t()[i], self.tokenizer))
-                    with torch.no_grad():
-                        self.store(
-                            x.t()[i],
-                            actions[i],
-                            next_x.t()[i],
-                            rewards[i] if actions[i] == 0 else torch.zeros(self.obj_dim).to(self.device),
-                            1 if actions[i] == 0 else 0
-                        )
+            if train:
+                # print(t, active_mask)
+                for i in range(len(active_mask)):
+                    if active_mask[i] == 1:
+                        if actions[i] == 0 or t==self.max_len-1:
+                            # import pdb; pdb.set_trace();
+                            rewards[i] = torch.from_numpy(task.score(tokens_to_str([x.t()[i]], self.tokenizer)))
+                        with torch.no_grad():
+                            self.store(
+                                x.t()[i],
+                                actions[i],
+                                next_x.t()[i],
+                                rewards[i] if actions[i] == 0 else torch.zeros(self.obj_dim).to(self.device),
+                                1 if actions[i] == 0 else 0
+                            )
+                loss += self.learn()
+
             x = next_x
-            loss += self.learn()
 
             if active_mask.sum() == 0:
                 break
@@ -205,7 +208,7 @@ class EnvelopeMOQ(BaseAlgorithm):
         return states, loss, rewards
 
     def learn(self):
-        if len(self.trans_mem) > self.batch_size:
+        if len(self.trans_mem) > self.batch_size * self.max_len:
             self.update_count += 1
 
             minibatch = self.sample_transitions(self.trans_mem, self.priority_mem, self.batch_size)
@@ -336,6 +339,12 @@ class EnvelopeMOQ(BaseAlgorithm):
         )
         return [pop[i] for i in inds]
 
+    def process_reward(self, seqs, prefs, task, rewards=None):
+        if rewards is None:
+            rewards = task.score(seqs)
+        r = (torch.tensor(prefs) * (rewards)).sum(axis=1)
+        return r
+
     def evaluation(self, task, plot=False):
         new_candidates = []
         r_scores = [] 
@@ -344,7 +353,7 @@ class EnvelopeMOQ(BaseAlgorithm):
         topk_div = []
         for prefs in self.simplex:
             cond_var, (_, beta) = self._get_condition_var(prefs=prefs, train=False, bs=self.num_samples)
-            samples, _ = self.sample(self.num_samples, cond_var, train=False)
+            samples, _, _ = self.run_episodes(self.num_samples, cond_var, prefs=prefs, task=task, train=False)
             rewards = task.score(samples)
             r = self.process_reward(samples, prefs, task, rewards=rewards)
             
