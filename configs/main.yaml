@@ -16,7 +16,7 @@ exp_tags: []
 job_name: null
 timestamp: ${now:%Y-%m-%d_%H-%M-%S}
 log_dir: ${data_dir}/${exp_name}
-wandb_mode: disabled
+wandb_mode: online
 
 hydra:
   run:
