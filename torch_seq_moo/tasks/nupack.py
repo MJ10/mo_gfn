@@ -49,6 +49,7 @@ class NupackTask(BaseTask):
         scores_dict = self.nupack_score(candidates, objectives=self.objectives)
         scores = [scores_dict[obj] for obj in self.objectives]
         scores = np.stack(scores, axis=-1).astype(np.float64)
+        scores *= -1
         return scores
 
 
