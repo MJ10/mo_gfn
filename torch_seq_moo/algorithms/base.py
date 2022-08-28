@@ -2,8 +2,9 @@ import wandb
 
 
 class BaseAlgorithm():
-    def __init__(self, cfg, tokenizer, task_cfg, **kwargs):
+    def __init__(self, cfg, task, tokenizer, task_cfg, **kwargs):
         self.cfg = cfg
+        self.task = task
         self.tokenizer = tokenizer
         self.task_cfg = task_cfg
 
