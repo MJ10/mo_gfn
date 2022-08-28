@@ -30,6 +30,14 @@ AMINO_ACIDS = [
 ]
 RESIDUE_ALPHABET = ["[PAD]", "[CLS]", "[UNK]", "[MASK]", "[SEP]"] + AMINO_ACIDS + ["0"]
 
+APTAMER_BASES = [
+    "A",
+    "C",
+    "T",
+    "G",
+]
+APTAMER_ALPHABET = ["[PAD]", "[CLS]", "[UNK]", "[MASK]", "[SEP]"] + APTAMER_BASES + ["0"]
+
 TOY_VOCAB = [
     "A",
     "R"
@@ -132,6 +140,10 @@ class IntTokenizer:
 class ResidueTokenizer(IntTokenizer):
     def __init__(self):
         super().__init__(AMINO_ACIDS, RESIDUE_ALPHABET)
+
+class AptamerTokenizer(IntTokenizer):
+    def __init__(self):
+        super().__init__(APTAMER_BASES, APTAMER_ALPHABET)
 
 class ToyTokenizer(IntTokenizer):
     def __init__(self):
