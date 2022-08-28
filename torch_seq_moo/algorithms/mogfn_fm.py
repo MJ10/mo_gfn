@@ -18,8 +18,8 @@ from tqdm import tqdm
 
 
 class MOGFN(BaseAlgorithm):
-    def __init__(self, cfg, tokenizer, task_cfg, **kwargs):
-        super(MOGFN, self).__init__(cfg, tokenizer, task_cfg)
+    def __init__(self, cfg, task, tokenizer, task_cfg, **kwargs):
+        super(MOGFN, self).__init__(cfg, task, tokenizer, task_cfg)
         self.setup_vars(kwargs)
         self.init_policy()
 
