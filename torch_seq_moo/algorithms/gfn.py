@@ -46,7 +46,7 @@ class GFN(BaseAlgorithm):
         self.beta_shape = cfg.beta_shape
         self.beta_max = cfg.beta_max
         self.reward_type = cfg.reward_type
-        self.eval_pref = np.array(self.task_cfg.eval_pref)
+        self.eval_pref = self.get_eval_pref(cfg.eval_pref_choice) # np.array(self.task_cfg.eval_pref)
         # Eval Stuff
         self._hv_ref = None
         self._ref_point = np.array([0] * self.obj_dim)
@@ -57,6 +57,10 @@ class GFN(BaseAlgorithm):
         self.eos_char = "[SEP]"
         self.pad_tok = self.tokenizer.convert_token_to_id("[PAD]")
         self.simplex = generate_simplex(self.obj_dim, cfg.simplex_bins)
+
+    def get_eval_pref(self, i):
+        rs = np.random.RandomState(123)
+        return rs.dirichlet([1] * self.obj_dim, size=5)[i]
 
     def init_policy(self):
         cfg = self.cfg

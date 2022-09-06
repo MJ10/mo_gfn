@@ -352,7 +352,7 @@ class EnvelopeMOQ(BaseAlgorithm):
         topk_rs = []
         topk_div = []
         for prefs in self.simplex:
-            cond_var, (_, beta) = self._get_condition_var(prefs=prefs, train=False, bs=self.num_samples)
+            cond_var, _ = self._get_condition_var(prefs=prefs, train=False, bs=self.num_samples)
             samples, _, _ = self.run_episodes(self.num_samples, cond_var, prefs=prefs, task=task, train=False)
             rewards = task.score(samples)
             r = self.process_reward(samples, prefs, task, rewards=rewards)

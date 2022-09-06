@@ -1,4 +1,4 @@
-_target_: torch_seq_moo.algorithms.gfn.GFN
+_target_: torch_seq_moo.algorithms.moreinforce.MOReinforce
 _recursive_: False
 num_rounds: 64
 num_gens: 16
@@ -13,9 +13,12 @@ reward_max: 100
 sampling_temp: 1
 train_steps: 100
 beta_use_therm: True
+pref_use_therm: True
 beta_cond: True
+pref_cond: True
 beta_scale: 1
 beta_shape: 32
+pref_alpha: 1.0
 pi_lr: 0.0001
 z_lr: 0.001
 wd: 0.0001
@@ -23,13 +26,13 @@ beta_max: 32
 therm_n_bins: 50
 gen_clip: 10
 encoder_obj: mlm
-reward_type: convex
+reward_type: tchebycheff
 sample_beta: 4
 simplex_bins: 10
 eval_freq: 100
 k: 10
 num_samples: 128
-eval_pref_choice: 0
+use_eval_pref: False
 
 model:
   _target_: torch_seq_moo.algorithms.mogfn_utils.conditional_transformer.CondGFNTransformer

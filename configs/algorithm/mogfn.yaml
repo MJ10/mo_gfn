@@ -39,9 +39,8 @@ model:
   max_len: ${task.max_len}
   vocab_size: 26
   num_actions: 21
-  num_hid: 256
+  num_hid: 64
   num_layers: 3
-  num_head: 16
+  num_head: 8
   bidirectional: False
   dropout: 0
-  batch_size: 128

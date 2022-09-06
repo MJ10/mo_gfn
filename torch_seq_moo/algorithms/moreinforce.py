@@ -18,9 +18,9 @@ from tqdm import tqdm
 
 
 
-class MOGFN(BaseAlgorithm):
+class MOReinforce(BaseAlgorithm):
     def __init__(self, cfg, tokenizer, task_cfg, **kwargs):
-        super(MOGFN, self).__init__(cfg, tokenizer, task_cfg)
+        super(MOReinforce, self).__init__(cfg, tokenizer, task_cfg)
         self.setup_vars(kwargs)
         self.init_policy()
 
@@ -138,18 +138,19 @@ class MOGFN(BaseAlgorithm):
     def train_step(self, task, batch_size):
         cond_var, (prefs, beta) = self._get_condition_var(train=True, bs=batch_size)
         states, logprobs = self.sample(batch_size, cond_var)
+        # import pdb; pdb.set_trace()
 
-        log_r = self.process_reward(states, prefs, task).to(self.device)
+        r = -self.process_reward(states, prefs, task).to(self.device)
         self.opt.zero_grad()
         self.opt_Z.zero_grad()
         
         # TB Loss
-        loss = (logprobs - beta * log_r).pow(2).mean()
+        loss = (logprobs * (r - r.mean())).mean()
         loss.backward()
         torch.nn.utils.clip_grad_norm_(self.model.parameters(), self.gen_clip)
         self.opt.step()
         self.opt_Z.step()
-        return loss.item(), log_r.mean()
+        return loss.item(), (-r).mean()
 
 
     def sample(self, episodes, cond_var=None, train=True):
@@ -168,14 +169,14 @@ class MOGFN(BaseAlgorithm):
             if t <= self.min_len:
                 logits[:, 0] = -1000 # Prevent model from stopping
                                      # without having output anything
-                if t == 0:
-                    traj_logprob += self.model.Z(cond_var)
+                # if t == 0:
+                    # traj_logprob += self.model.Z(cond_var)
 
             cat = Categorical(logits=logits / self.sampling_temp)
             actions = cat.sample()
-            if train and self.random_action_prob > 0:
-                uniform_mix = torch.bernoulli(uniform_pol).bool()
-                actions = torch.where(uniform_mix, torch.randint(int(t <= self.min_len), logits.shape[1], (episodes, )).to(self.device), actions)
+            # if train and self.random_action_prob > 0:
+            #     uniform_mix = torch.bernoulli(uniform_pol).bool()
+            #     actions = torch.where(uniform_mix, torch.randint(int(t <= self.min_len), logits.shape[1], (episodes, )).to(self.device), actions)
             
             log_prob = cat.log_prob(actions) * active_mask
             traj_logprob += log_prob
@@ -190,16 +191,16 @@ class MOGFN(BaseAlgorithm):
         return states, traj_logprob
     
 
-    def process_reward(self, seqs, prefs, task, rewards=None, train=True):
+    def process_reward(self, seqs, prefs, task, rewards=None):
         if rewards is None:
             rewards = task.score(seqs)
         if self.reward_type == "convex":
-            log_r = (torch.tensor(prefs) * (rewards)).sum(axis=1).clamp(min=self.reward_min).log()
+            log_r = (torch.tensor(prefs) * (rewards)).sum(axis=1)
         elif self.reward_type == "logconvex":
-            log_r = (torch.tensor(prefs) * torch.tensor(rewards).clamp(min=self.reward_min).log()).sum(axis=1)
+            log_r = (torch.tensor(prefs) * torch.tensor(rewards).clamp(min=self.reward_min).log()).sum(axis=1).exp()
         elif self.reward_type == "tchebycheff":
-            log_r = (torch.tensor(prefs) * torch.tensor(rewards).clamp(min=self.reward_min).log()).sum(axis=1)
-        return log_r.exp() if not train else log_r
+            log_r = (torch.tensor(prefs) * torch.abs(-torch.tensor(rewards) - torch.zeros(self.obj_dim))).max(axis=1)[0]
+        return log_r
 
     def evaluation(self, task, plot=False):
         new_candidates = []
@@ -212,7 +213,7 @@ class MOGFN(BaseAlgorithm):
                 cond_var, (_, beta) = self._get_condition_var(prefs=prefs, train=False, bs=self.num_samples)
                 samples, _ = self.sample(self.num_samples, cond_var, train=False)
                 rewards = task.score(samples)
-                r = self.process_reward(samples, prefs, task, rewards=rewards, train=False)
+                r = self.process_reward(samples, prefs, task, rewards=rewards)
                 
                 # topk metrics
                 topk_r, topk_idx = torch.topk(r, self.k)
@@ -232,7 +233,7 @@ class MOGFN(BaseAlgorithm):
                 cond_var, (_, beta) = self._get_condition_var(prefs=prefs, train=False, bs=self.num_samples)
                 samples, _ = self.sample(self.num_samples, cond_var, train=False)
                 rewards = task.score(samples)
-                r = self.process_reward(samples, prefs, task, rewards=rewards, train=False)
+                r = self.process_reward(samples, prefs, task, rewards=rewards)
                 
                 # topk metrics
                 topk_r, topk_idx = torch.topk(r, self.k)
