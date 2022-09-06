@@ -112,6 +112,9 @@ class NupackTask(BaseTask):
             dict_return.update(
                 {"energy": energies}
             )  # this is already negative by construction in nupack
+        if "invlength" in objectives:
+            invlength = np.asarray([self.min_len * (1.0 / len(seq)) for seq in sequences])
+            dict_return.update({"invlength": -invlength})
 
         if "open loop" in objectives:
             biggest_loop = np.zeros(len(ssStrings))
