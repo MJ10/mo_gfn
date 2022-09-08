@@ -27,6 +27,7 @@ class NupackTask(BaseTask):
         self.max_len = max_len
         self.num_start_examples = num_start_examples
         self.max_reward_per_dim = kwargs["max_score_per_dim"]
+        self.score_max = kwargs["score_max"]
         self.objectives = objectives
 
     def task_setup(self, *args, **kwargs):
@@ -49,7 +50,8 @@ class NupackTask(BaseTask):
         scores_dict = self.nupack_score(candidates, objectives=self.objectives)
         scores = [scores_dict[obj] for obj in self.objectives]
         scores = np.stack(scores, axis=-1).astype(np.float64)
-        scores *= -1
+        # Normalize and make positive
+        scores = -1 * scores / self.score_max
         return scores
 
 
