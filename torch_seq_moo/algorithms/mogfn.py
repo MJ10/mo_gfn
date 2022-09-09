@@ -61,6 +61,7 @@ class MOGFN(BaseAlgorithm):
         self.eos_char = "[SEP]"
         self.pad_tok = self.tokenizer.convert_token_to_id("[PAD]")
         self.simplex = generate_simplex(self.obj_dim, cfg.simplex_bins)
+        self.unnormalize_rewards = cfg.unnormalize_rewards
         # Adapt model config to task
         self.cfg.model.vocab_size = len(self.tokenizer.full_vocab)
         self.cfg.model.num_actions = len(self.tokenizer.non_special_vocab) + 1
@@ -113,6 +114,8 @@ class MOGFN(BaseAlgorithm):
                         pareto_front=fig
                     ), commit=False)
                 table = wandb.Table(columns = ["Sequence", "Rewards", "Prefs"])
+                if self.unnormalize_rewards:
+                    all_rews *= task.score_max
                 for sample, rew, pref in zip(samples, all_rews, self.simplex):
                     table.add_data(str(sample), str(rew), str(pref))
                 self.log({"generated_seqs": table})
