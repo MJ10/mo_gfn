@@ -117,6 +117,10 @@ class NupackTask(BaseTask):
         if "invlength" in objectives:
             invlength = np.asarray([self.min_len * (1.0 / len(seq)) for seq in sequences])
             dict_return.update({"invlength": -invlength})
+        if "explength" in objectives:
+            beta_length = 0.05
+            explength = np.asarray([np.exp(-1.0 * beta_length * len(seq)) for seq in sequences])
+            dict_return.update({"explength": explength})
 
         if "open loop" in objectives:
             biggest_loop = np.zeros(len(ssStrings))
