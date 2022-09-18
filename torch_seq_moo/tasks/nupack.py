@@ -120,7 +120,7 @@ class NupackTask(BaseTask):
         if "explength" in objectives:
             beta_length = 0.05
             explength = np.asarray([np.exp(-1.0 * beta_length * len(seq)) for seq in sequences])
-            dict_return.update({"explength": explength})
+            dict_return.update({"explength": -explength})
         if "num_at" in objectives:
             num_at = np.asarray([seq.count("A") + seq.count("T") for seq in sequences])
             dict_return.update({"num_at": -num_at})
