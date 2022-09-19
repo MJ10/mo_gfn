@@ -140,7 +140,7 @@ class MOReinforce(BaseAlgorithm):
         states, logprobs = self.sample(batch_size, cond_var)
         # import pdb; pdb.set_trace()
 
-        r = -self.process_reward(states, prefs, task).to(self.device)
+        r = self.process_reward(states, prefs, task).to(self.device)
         self.opt.zero_grad()
         self.opt_Z.zero_grad()
         
@@ -199,7 +199,7 @@ class MOReinforce(BaseAlgorithm):
         elif self.reward_type == "logconvex":
             log_r = (torch.tensor(prefs) * torch.tensor(rewards).clamp(min=self.reward_min).log()).sum(axis=1).exp()
         elif self.reward_type == "tchebycheff":
-            log_r = (torch.tensor(prefs) * torch.abs(-torch.tensor(rewards) - torch.zeros(self.obj_dim))).max(axis=1)[0]
+            log_r = (torch.tensor(prefs) * torch.abs(-1 + torch.tensor(rewards))).max(axis=1)[0]
         return log_r
 
     def evaluation(self, task, plot=False):
