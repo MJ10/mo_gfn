@@ -288,7 +288,7 @@ class MOGFN(BaseAlgorithm):
             if not train:
                 prefs = self.simplex[0]
             else:
-                prefs = np.random.dirichlet([self.pref_alpha]*self.obj_dim)
+                prefs = np.random.dirichlet(np.array(self.pref_alpha))
         if beta is None:
             if train:
                 beta = float(np.random.randint(1, self.beta_max+1)) if self.beta_cond else self.sample_beta
