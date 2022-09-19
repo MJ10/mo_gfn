@@ -57,7 +57,13 @@ def plot_pareto(pareto_rewards, all_rewards, pareto_only=False):
     # if pareto_rewards.shape[-1] > 3:
     #     fig, axes = plt.subplots(pareto_rewards.shape[-1], pareto_rewards.shape[-1])
     #     for i in range(pareto_rewards.shape[-1]):
-        
+    #         for j in range(pareto_candidates.shape[-1]):
+    #             if not pareto_only:
+    #                 ax.scatter(all_rewards[:, i], all_rewards[j], lcolor="grey", label="All Samples")
+    #             ax.scatter(*np.hsplit(pareto_rewards, pareto_rewards.shape[-1]), color="red", label="Pareto Front")
+    #             ax.set_xlabel("Reward 1")
+    #             ax.set_ylabel("Reward 2")
+    #             ax.legend()
     #         fig.suptitle('Sharing x per column, y per row')
     #         ax1.plot(x, y)
     #         ax2.plot(x, y**2, 'tab:orange')

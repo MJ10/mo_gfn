@@ -50,6 +50,9 @@ class MOGFN(BaseAlgorithm):
         self.beta_max = cfg.beta_max
         self.reward_type = cfg.reward_type
         self.use_eval_pref = cfg.use_eval_pref
+        self.num_pareto_points = cfg.num_pareto_points
+        self.state_save_path = cfg.state_save_path
+        self.pareto_freq = cfg.pareto_freq
         self.eval_prefs = self.get_eval_pref()# np.array(self.task_cfg.eval_pref)
 
         # Eval Stuff
@@ -123,6 +126,19 @@ class MOGFN(BaseAlgorithm):
                 for sample, rew, pref in zip(samples, all_rews, self.simplex):
                     table.add_data(str(sample), str(rew), str(pref))
                 self.log({"generated_seqs": table})
+                if i % self.pareto_freq == 0:
+                    new_candidates, all_rewards, r_scores, pareto_candidates, pareto_targets, prefs = self.plot_pareto(self.num_pareto_points, task)
+                    self.update_state(dict(
+                        topk_rewards=topk_metrics[0].mean(),
+                        topk_diversity=topk_metrics[1].mean(),
+                        sample_r=rs.mean(),
+                        hv=mo_metrics["hypervolume"],
+                        r2=mo_metrics["r2"],
+                        samples=new_candidates,
+                        all_rewards=all_rewards,
+                        prefs=prefs
+                    ))
+                    self.save_state()
             self.log(dict(
                 train_loss=loss,
                 train_rewards=r,
@@ -251,7 +267,7 @@ class MOGFN(BaseAlgorithm):
         r_scores = np.array(r_scores)
         all_rewards = np.array(all_rewards)
         new_candidates = np.array(new_candidates)
-        
+
         if not self.use_eval_pref:
             # filter to get current pareto front 
             pareto_candidates, pareto_targets = pareto_frontier(new_candidates, all_rewards, maximize=True)
@@ -263,6 +279,26 @@ class MOGFN(BaseAlgorithm):
             fig = None
         
         return new_candidates, all_rewards, r_scores, mo_metrics, (np.array(topk_rs), np.array(topk_div)), fig
+
+    def plot_pareto(self, num_points, task):
+        prefs = np.random.dirichlet([1] * self.obj_dim, size=num_points)
+        new_candidates = []
+        r_scores = [] 
+        all_rewards = []
+        for pref in prefs:
+            cond_var, (_, beta) = self._get_condition_var(prefs=pref, train=False, bs=self.num_samples)
+            samples, _ = self.sample(self.num_samples, cond_var, train=False)
+            rewards = task.score(samples)
+            r = self.process_reward(samples, pref, task, rewards=rewards, train=False)
+            
+            new_candidates.extend(samples)
+            all_rewards.extend(rewards)
+            r_scores.extend(r.cpu())
+        r_scores = np.array(r_scores)
+        all_rewards = np.array(all_rewards)
+        new_candidates = np.array(new_candidates)
+        pareto_candidates, pareto_targets = pareto_frontier(new_candidates, all_rewards,maximize=True)
+        return new_candidates, all_rewards, r_scores, pareto_candidates, pareto_targets, prefs
 
     def val_step(self, batch_size):
         overall_loss = 0.
