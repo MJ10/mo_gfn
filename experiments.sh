@@ -102,43 +102,95 @@
 #     done
 # done
 
-for algo in mogfn
+# for algo in mogfn
+# do
+#     for task in regex regex_2 regex_4 regex_easy regex_easy_3 regex_easy_4
+#     do
+#         for simplex_bins in 50
+#         do
+#             for beta_cond in False
+#             do
+#                 for sample_beta in 48
+#                 do
+#                     echo "${algo} ${task}, ${simplex_bins}, ${beta_cond}, ${sample_beta}, ${beta_max}"
+#                     sbatch job.sh algorithm=${algo} task=${task} tokenizer=protein algorithm.train_steps=10000 task.min_len=22 task.max_len=24 wandb_mode=online algorithm.beta_cond=${beta_cond} algorithm.sample_beta=${sample_beta} algorithm.beta_max=${sample_beta} algorithm.simplex_bins=${simplex_bins} group_name="mogfn_2" exp_name=comp_${algo}_${beta_cond}_${simplex_bins}_${sample_beta} exp_tags="[${task},${algo},22-24,baselines]"
+#                     sleep 1
+#                 done
+#             done  
+#         done
+#     done
+# done
+
+
+
+
+# for algo in mogfn
+# do
+#     for task in regex regex_easy_3
+#     do
+#         for simplex_bins in 50
+#         do
+#             for beta_cond in False
+#             do
+#                 for sample_beta in 48
+#                 do
+#                     echo "${algo} ${task}, ${simplex_bins}, ${sample_beta}, ${beta_max}"
+#                     sbatch job.sh algorithm=${algo} task=${task} tokenizer=protein algorithm.train_steps=10000 task.min_len=22 task.max_len=24 wandb_mode=online algorithm.beta_cond=${beta_cond} algorithm.sample_beta=${sample_beta} algorithm.beta_max=${sample_beta} algorithm.simplex_bins=${simplex_bins} group_name="mogfn_2" exp_name=comp_${algo}_${simplex_bins}_${sample_beta}_{} exp_tags="[${task},${algo},22-24,reward_abl]"
+#                     sleep 1
+#                 done
+#             done  
+#         done
+#     done
+# done
+
+
+algo="mogfn"
+for seed in 123 42 10
 do
-    for task in regex regex_2 regex_4 regex_easy regex_easy_3 regex_easy_4
+    for sample_beta in 12 32 48
     do
-        for simplex_bins in 50
+        for task in regex regex_easy_3
         do
-            for beta_cond in False
-            do
-                for sample_beta in 48
-                do
-                    echo "${algo} ${task}, ${simplex_bins}, ${beta_cond}, ${sample_beta}, ${beta_max}"
-                    sbatch job.sh algorithm=${algo} task=${task} tokenizer=protein algorithm.train_steps=10000 task.min_len=22 task.max_len=24 wandb_mode=online algorithm.beta_cond=${beta_cond} algorithm.sample_beta=${sample_beta} algorithm.beta_max=${sample_beta} algorithm.simplex_bins=${simplex_bins} group_name="mogfn_2" exp_name=comp_${algo}_${beta_cond}_${simplex_bins}_${sample_beta} exp_tags="[${task},${algo},22-24,baselines]"
-                    sleep 1
-                done
-            done  
+            sbatch job-cc.sh algorithm=${algo} task=${task} tokenizer=protein algorithm.train_steps=10000 task.min_len=32 task.max_len=36 wandb_mode=offline algorithm.beta_cond=False algorithm.sample_beta=${sample_beta} algorithm.beta_max=${sample_beta} algorithm.simplex_bins=50 group_name=${algo} exp_name=${algo}_${task}_${seed} exp_tags="[${task},${algo},32-36,final]" seed=${seed} state_save_path="/scratch/mjain/mogfn/${algo}_${sample_beta}_${seed}_${task}.pkl.gz"
+        done
+    done
+done
+
+# sbatch job-cc.sh algorithm=${algo} task=${task} tokenizer=protein algorithm.train_steps=10000 task.min_len=32 task.max_len=36 wandb_mode=offline algorithm.beta_cond=${beta_cond} algorithm.sample_beta=${sample_beta} algorithm.beta_max=${sample_beta} algorithm.simplex_bins=50 group_name=${algo} exp_name=${algo}_${task}_${seed} exp_tags="[${task},${algo},32-36,final]" seed=${seed} state_save_path="/scratch/mjain/mogfn/${algo}_${sample_beta}_${seed}_${task}.pkl.gz"
+
+algo="mogfn_fm"
+for seed in 123 42 10
+do
+    for sample_beta in 12 32 48
+    do
+        for task in regex regex_easy_3
+        do
+            sbatch job-cc.sh algorithm=${algo} task=${task} tokenizer=protein algorithm.train_steps=10000 task.min_len=32 task.max_len=36 wandb_mode=offline algorithm.beta_cond=False algorithm.sample_beta=${sample_beta} algorithm.beta_max=${sample_beta} algorithm.simplex_bins=50 group_name=${algo} exp_name=${algo}_${task}_${seed} exp_tags="[${task},${algo},32-36,final]" seed=${seed}
         done
     done
 done
 
 
-
-
-for algo in mogfn
+algo="moreinforce"
+for seed in 123 42 10
 do
-    for task in regex regex_2 regex_4 regex_easy regex_easy_3 regex_easy_4
+    for sample_beta in 12 32 48
     do
-        for simplex_bins in 50
+        for task in regex regex_easy_3
         do
-            for beta_cond in False
-            do
-                for sample_beta in 48
-                do
-                    echo "${algo} ${task}, ${simplex_bins}, ${sample_beta}, ${beta_max}"
-                    sbatch job.sh algorithm=${algo} task=${task} tokenizer=protein algorithm.train_steps=10000 task.min_len=22 task.max_len=24 wandb_mode=online algorithm.beta_cond=${beta_cond} algorithm.sample_beta=${sample_beta} algorithm.beta_max=${sample_beta} algorithm.simplex_bins=${simplex_bins} group_name="mogfn_2" exp_name=comp_${algo}_${simplex_bins}_${sample_beta}_{} exp_tags="[${task},${algo},22-24,reward_abl]"
-                    sleep 1
-                done
-            done  
+            sbatch job-cc.sh algorithm=${algo} task=${task} tokenizer=protein algorithm.train_steps=10000 task.min_len=32 task.max_len=36 wandb_mode=offline algorithm.beta_cond=False algorithm.sample_beta=${sample_beta} algorithm.beta_max=${sample_beta} algorithm.simplex_bins=50 group_name=${algo} exp_name=${algo}_${task}_${seed} exp_tags="[${task},${algo},32-36,final]" seed=${seed}
+        done
+    done
+done
+
+algo="envelope_moq"
+for seed in 123 42 10
+do
+    for sample_beta in 12 32 48
+    do
+        for task in regex regex_easy_3
+        do
+            sbatch job-cc.sh algorithm=${algo} task=${task} tokenizer=protein algorithm.train_steps=10000 task.min_len=32 task.max_len=36 wandb_mode=offline algorithm.beta_cond=False algorithm.sample_beta=${sample_beta} algorithm.beta_max=${sample_beta} algorithm.simplex_bins=50 group_name=${algo} exp_name=${algo}_${task}_${seed} exp_tags="[${task},${algo},32-36,final]" seed=${seed}
         done
     done
 done

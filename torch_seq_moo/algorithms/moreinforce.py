@@ -171,8 +171,8 @@ class MOReinforce(BaseAlgorithm):
                                      # without having output anything
                 # if t == 0:
                     # traj_logprob += self.model.Z(cond_var)
-
-            cat = Categorical(logits=logits / self.sampling_temp)
+            temp = self.sampling_temp if train else 0.01 # greedy during sampling
+            cat = Categorical(logits=logits / temp)
             actions = cat.sample()
             # if train and self.random_action_prob > 0:
             #     uniform_mix = torch.bernoulli(uniform_pol).bool()
@@ -194,12 +194,13 @@ class MOReinforce(BaseAlgorithm):
     def process_reward(self, seqs, prefs, task, rewards=None):
         if rewards is None:
             rewards = task.score(seqs)
+            rewards = ((rewards - 0) * 2) + -1 # shape rewards to improve learning
         if self.reward_type == "convex":
             log_r = (torch.tensor(prefs) * (rewards)).sum(axis=1)
         elif self.reward_type == "logconvex":
             log_r = (torch.tensor(prefs) * torch.tensor(rewards).clamp(min=self.reward_min).log()).sum(axis=1).exp()
         elif self.reward_type == "tchebycheff":
-            log_r = (torch.tensor(prefs) * torch.abs(-1 + torch.tensor(rewards))).max(axis=1)[0]
+            log_r = (torch.tensor(prefs) * torch.abs(1 - torch.tensor(rewards))).min(axis=1)[0]
         return log_r
 
     def evaluation(self, task, plot=False):
@@ -247,7 +248,8 @@ class MOReinforce(BaseAlgorithm):
                 max_idx = r.argmax()
                 new_candidates.append(samples[max_idx])
                 all_rewards.append(rewards[max_idx])
-                r_scores.append(r.max().item())
+                # import pdb; pdb.set_trace();
+                r_scores.append((torch.tensor(prefs) * (rewards[max_idx])).sum())
 
         r_scores = np.array(r_scores)
         all_rewards = np.array(all_rewards)

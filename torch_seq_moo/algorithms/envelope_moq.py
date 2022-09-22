@@ -342,6 +342,7 @@ class EnvelopeMOQ(BaseAlgorithm):
     def process_reward(self, seqs, prefs, task, rewards=None):
         if rewards is None:
             rewards = task.score(seqs)
+            rewards = ((rewards - 0) * 2) + -1 # shape rewards to improve learning
         r = (torch.tensor(prefs) * (rewards)).sum(axis=1)
         return r
 
