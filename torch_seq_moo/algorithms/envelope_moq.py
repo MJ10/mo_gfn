@@ -78,6 +78,9 @@ class EnvelopeMOQ(BaseAlgorithm):
         self.eos_char = "[SEP]"
         self.pad_tok = self.tokenizer.convert_token_to_id("[PAD]")
         self.simplex = generate_simplex(self.obj_dim, cfg.simplex_bins)
+        # Adapt model config to task
+        self.cfg.model.vocab_size = len(self.tokenizer.full_vocab)
+        self.cfg.model.num_actions = len(self.tokenizer.non_special_vocab) + 1
 
     def init_policy(self):
         cfg = self.cfg

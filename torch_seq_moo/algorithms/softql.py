@@ -59,6 +59,9 @@ class MOSoftQLearning(BaseAlgorithm):
         self.val_data = {
             'x': ["A", "AA", "AR", "RA", "RR", "R"]
         }
+        # Adapt model config to task
+        self.cfg.model.vocab_size = len(self.tokenizer.full_vocab)
+        self.cfg.model.num_actions = len(self.tokenizer.non_special_vocab) + 1
 
     def init_policy(self):
         cfg = self.cfg
