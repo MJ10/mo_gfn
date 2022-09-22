@@ -18,6 +18,7 @@ simplex_bins: 10
 eval_freq: 100
 k: 10
 num_samples: 128
+unnormalize_rewards: False
 
 gamma: 0.99
 epsilon: 0.5

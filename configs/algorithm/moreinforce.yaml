@@ -33,6 +33,7 @@ eval_freq: 100
 k: 10
 num_samples: 128
 use_eval_pref: False
+unnormalize_rewards: False
 
 model:
   _target_: torch_seq_moo.algorithms.mogfn_utils.conditional_transformer.CondGFNTransformer

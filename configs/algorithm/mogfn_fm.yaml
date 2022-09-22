@@ -30,6 +30,7 @@ simplex_bins: 10
 eval_freq: 100
 k: 10
 num_samples: 128
+unnormalize_rewards: False
 
 model:
   _target_: torch_seq_moo.algorithms.mogfn_utils.fm_arch.GFNTransformer
