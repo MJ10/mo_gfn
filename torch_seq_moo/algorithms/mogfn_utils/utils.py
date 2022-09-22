@@ -54,6 +54,24 @@ def plot_pareto(pareto_rewards, all_rewards, pareto_only=False):
         fig.update_traces(marker=dict(size=8),
                   selector=dict(mode='markers'))
         return fig
+    # if pareto_rewards.shape[-1] > 3:
+    #     fig, axes = plt.subplots(pareto_rewards.shape[-1], pareto_rewards.shape[-1])
+    #     for i in range(pareto_rewards.shape[-1]):
+    #         for j in range(pareto_candidates.shape[-1]):
+    #             if not pareto_only:
+    #                 ax.scatter(all_rewards[:, i], all_rewards[j], lcolor="grey", label="All Samples")
+    #             ax.scatter(*np.hsplit(pareto_rewards, pareto_rewards.shape[-1]), color="red", label="Pareto Front")
+    #             ax.set_xlabel("Reward 1")
+    #             ax.set_ylabel("Reward 2")
+    #             ax.legend()
+    #         fig.suptitle('Sharing x per column, y per row')
+    #         ax1.plot(x, y)
+    #         ax2.plot(x, y**2, 'tab:orange')
+    #         ax3.plot(x, -y, 'tab:green')
+    #         ax4.plot(x, -y**2, 'tab:red')
+
+    #     for ax in fig.get_axes():
+    #         ax.label_outer()
 
 def pareto_frontier(solutions, rewards, maximize=True):
     pareto_mask = pareto.is_non_dominated(torch.tensor(rewards) if maximize else -torch.tensor(rewards))

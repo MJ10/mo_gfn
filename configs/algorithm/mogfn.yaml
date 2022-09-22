@@ -29,20 +29,22 @@ encoder_obj: mlm
 reward_type: convex
 sample_beta: 4
 simplex_bins: 10
-eval_freq: 100
+eval_freq: 500
 k: 10
 num_samples: 128
 use_eval_pref: False
 unnormalize_rewards: False
+state_save_path: "/home/mila/m/moksh.jain/mo_gfn/test.pkl.gz"
+num_pareto_points: 500
+pareto_freq: 500
 
 model:
   _target_: torch_seq_moo.algorithms.mogfn_utils.conditional_transformer.CondGFNTransformer
   max_len: ${task.max_len}
   vocab_size: 26
   num_actions: 21
-  num_hid: 256
+  num_hid: 64
   num_layers: 3
-  num_head: 16
+  num_head: 8
   bidirectional: False
   dropout: 0
-  batch_size: 128
