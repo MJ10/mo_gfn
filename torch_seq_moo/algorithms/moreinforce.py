@@ -19,8 +19,8 @@ from tqdm import tqdm
 
 
 class MOReinforce(BaseAlgorithm):
-    def __init__(self, cfg, tokenizer, task_cfg, **kwargs):
-        super(MOReinforce, self).__init__(cfg, tokenizer, task_cfg)
+    def __init__(self, cfg, task, tokenizer, task_cfg, **kwargs):
+        super(MOReinforce, self).__init__(cfg, task, tokenizer, task_cfg)
         self.setup_vars(kwargs)
         self.init_policy()
 
@@ -30,7 +30,7 @@ class MOReinforce(BaseAlgorithm):
         # Task stuff
         self.max_len = cfg.max_len
         self.min_len = cfg.min_len
-        self.obj_dim = self.task_cfg.obj_dim
+        self.obj_dim = self.task.obj_dim
         # GFN stuff
         self.train_steps = cfg.train_steps
         self.random_action_prob = cfg.random_action_prob
