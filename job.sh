@@ -3,7 +3,7 @@
 #SBATCH --cpus-per-task=6                    # Ask for 2 CPUs
 #SBATCH --gres=gpu:1                         # Ask for 1 GPU
 #SBATCH --mem=8G                             # Ask for 10 GB of RAM
-#SBATCH --time=6:00:00                        # The job will run for 3 hours
+#SBATCH --time=2:00:00                        # The job will run for 3 hours
 #SBATCH -o /network/scratch/m/moksh.jain/logs/torchseqmoo-%j.out  # Write the log on tmp1
 
 module load python/3.7 cuda/11.1

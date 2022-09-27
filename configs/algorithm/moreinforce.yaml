@@ -1,4 +1,4 @@
-_target_: torch_seq_moo.algorithms.mogfn_fm.MOGFN
+_target_: torch_seq_moo.algorithms.moreinforce.MOReinforce
 _recursive_: False
 num_rounds: 64
 num_gens: 16
@@ -6,7 +6,8 @@ random_action_prob: 0.01
 max_len: ${task.max_len}
 min_len: ${task.min_len}
 eval_metrics: ["hypervolume", "r2", "hsri"]
-batch_size: 64
+batch_size: 128
+reward_exp: 4
 reward_min: 1e-80
 reward_max: 100
 sampling_temp: 1
@@ -25,15 +26,17 @@ beta_max: 32
 therm_n_bins: 50
 gen_clip: 10
 encoder_obj: mlm
+reward_type: tchebycheff
 sample_beta: 4
 simplex_bins: 10
 eval_freq: 100
 k: 10
 num_samples: 128
+use_eval_pref: False
 unnormalize_rewards: False
 
 model:
-  _target_: torch_seq_moo.algorithms.mogfn_utils.fm_arch.GFNTransformer
+  _target_: torch_seq_moo.algorithms.mogfn_utils.conditional_transformer.CondGFNTransformer
   max_len: ${task.max_len}
   vocab_size: 26
   num_actions: 21
@@ -42,4 +45,4 @@ model:
   num_head: 16
   bidirectional: False
   dropout: 0
-  batch_size: 64
+  batch_size: 128

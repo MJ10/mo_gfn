@@ -11,5 +11,5 @@ batch_size: 16
 max_num_edits: null
 max_ngram_size: 1
 allow_len_change: True
-max_score_per_dim: 8
+max_score_per_dim: 18
 eval_pref: [0.6, 0.4]

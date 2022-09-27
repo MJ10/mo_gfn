@@ -50,7 +50,11 @@ class MOGFN(BaseAlgorithm):
         self.beta_max = cfg.beta_max
         self.reward_type = cfg.reward_type
         self.use_eval_pref = cfg.use_eval_pref
-        self.eval_pref = np.array(self.task_cfg.eval_pref)
+        self.num_pareto_points = cfg.num_pareto_points
+        self.state_save_path = cfg.state_save_path
+        self.pareto_freq = cfg.pareto_freq
+        self.eval_prefs = self.get_eval_pref()# np.array(self.task_cfg.eval_pref)
+
         # Eval Stuff
         self._hv_ref = None
         self._ref_point = np.array([0] * self.obj_dim)
@@ -65,6 +69,10 @@ class MOGFN(BaseAlgorithm):
         # Adapt model config to task
         self.cfg.model.vocab_size = len(self.tokenizer.full_vocab)
         self.cfg.model.num_actions = len(self.tokenizer.non_special_vocab) + 1
+
+    def get_eval_pref(self):
+        rs = np.random.RandomState(123)
+        return rs.dirichlet([1] * self.obj_dim, size=5)
 
     def init_policy(self):
         cfg = self.cfg
@@ -106,6 +114,11 @@ class MOGFN(BaseAlgorithm):
                     topk_diversity=topk_metrics[1].mean(),
                     sample_r=rs.mean()
                 ), commit=False)
+                # print({"topk_reward_pref_{}".format(i): topk_metrics[0][i] for i in range(len(topk_metrics[0]))})
+                if self.use_eval_pref:
+                    self.log({"topk_reward_pref_{}".format(i): topk_metrics[0][i] for i in range(len(topk_metrics[0]))}, commit=False)
+                    self.log({"topk_diversity_pref_{}".format(i): topk_metrics[1][i] for i in range(len(topk_metrics[1]))}, commit=False)
+                    self.log({"sample_reward_pref_{}".format(i): rs[i] for i in range(len(rs))}, commit=False)
 
                 self.log({key: val for key, val in mo_metrics.items()}, commit=False)
 
@@ -119,6 +132,19 @@ class MOGFN(BaseAlgorithm):
                 for sample, rew, pref in zip(samples, all_rews, self.simplex):
                     table.add_data(str(sample), str(rew), str(pref))
                 self.log({"generated_seqs": table})
+                if i % self.pareto_freq == 0:
+                    new_candidates, all_rewards, r_scores, pareto_candidates, pareto_targets, prefs = self.plot_pareto(self.num_pareto_points, task)
+                    self.update_state(dict(
+                        topk_rewards=topk_metrics[0].mean(),
+                        topk_diversity=topk_metrics[1].mean(),
+                        sample_r=rs.mean(),
+                        hv=mo_metrics["hypervolume"],
+                        r2=mo_metrics["r2"],
+                        samples=new_candidates,
+                        all_rewards=all_rewards,
+                        prefs=prefs
+                    ))
+                    self.save_state()
             self.log(dict(
                 train_loss=loss,
                 train_rewards=r,
@@ -186,14 +212,16 @@ class MOGFN(BaseAlgorithm):
         return states, traj_logprob
     
 
-    def process_reward(self, seqs, prefs, task, rewards=None):
+    def process_reward(self, seqs, prefs, task, rewards=None, train=True):
         if rewards is None:
             rewards = task.score(seqs)
         if self.reward_type == "convex":
             log_r = (torch.tensor(prefs) * (rewards)).sum(axis=1).clamp(min=self.reward_min).log()
         elif self.reward_type == "logconvex":
             log_r = (torch.tensor(prefs) * torch.tensor(rewards).clamp(min=self.reward_min).log()).sum(axis=1)
-        return log_r
+        elif self.reward_type == "tchebycheff":
+            log_r = (torch.tensor(prefs) * torch.tensor(rewards).clamp(min=self.reward_min).log()).sum(axis=1)
+        return log_r.exp() if not train else log_r
 
     def evaluation(self, task, plot=False):
         new_candidates = []
@@ -202,31 +230,31 @@ class MOGFN(BaseAlgorithm):
         topk_rs = []
         topk_div = []
         if self.use_eval_pref:
-            prefs = self.eval_pref
-            cond_var, (_, beta) = self._get_condition_var(prefs=prefs, train=False, bs=self.num_samples)
-            samples, _ = self.sample(self.num_samples, cond_var, train=False)
-            rewards = task.score(samples)
-            r = self.process_reward(samples, prefs, task, rewards=rewards)
-            
-            # topk metrics
-            topk_r, topk_idx = torch.topk(r, self.k)
-            samples = np.array(samples)
-            topk_seq = samples[topk_idx].tolist()
-            edit_dist = mean_pairwise_distances(topk_seq)
-            topk_rs.append(topk_r.mean().item())
-            topk_div.append(edit_dist)
-            
-            # top 1 metrics
-            max_idx = r.argmax()
-            new_candidates.append(samples[max_idx])
-            all_rewards.append(rewards[max_idx])
-            r_scores.append(r.max().item())
+            for prefs in self.eval_prefs:
+                cond_var, (_, beta) = self._get_condition_var(prefs=prefs, train=False, bs=self.num_samples)
+                samples, _ = self.sample(self.num_samples, cond_var, train=False)
+                rewards = task.score(samples)
+                r = self.process_reward(samples, prefs, task, rewards=rewards, train=False)
+                
+                # topk metrics
+                topk_r, topk_idx = torch.topk(r, self.k)
+                samples = np.array(samples)
+                topk_seq = samples[topk_idx].tolist()
+                edit_dist = mean_pairwise_distances(topk_seq)
+                topk_rs.append(topk_r.mean().item())
+                topk_div.append(edit_dist)
+                
+                # top 1 metrics
+                max_idx = r.argmax()
+                new_candidates.append(samples[max_idx])
+                all_rewards.append(rewards[max_idx])
+                r_scores.append(r.max().item())
         else:
             for prefs in self.simplex:
                 cond_var, (_, beta) = self._get_condition_var(prefs=prefs, train=False, bs=self.num_samples)
                 samples, _ = self.sample(self.num_samples, cond_var, train=False)
                 rewards = task.score(samples)
-                r = self.process_reward(samples, prefs, task, rewards=rewards)
+                r = self.process_reward(samples, prefs, task, rewards=rewards, train=False)
                 
                 # topk metrics
                 topk_r, topk_idx = torch.topk(r, self.k)
@@ -245,7 +273,7 @@ class MOGFN(BaseAlgorithm):
         r_scores = np.array(r_scores)
         all_rewards = np.array(all_rewards)
         new_candidates = np.array(new_candidates)
-        
+
         if not self.use_eval_pref:
             # filter to get current pareto front 
             pareto_candidates, pareto_targets = pareto_frontier(new_candidates, all_rewards, maximize=True)
@@ -257,6 +285,26 @@ class MOGFN(BaseAlgorithm):
             fig = None
         
         return new_candidates, all_rewards, r_scores, mo_metrics, (np.array(topk_rs), np.array(topk_div)), fig
+
+    def plot_pareto(self, num_points, task):
+        prefs = np.random.dirichlet([1] * self.obj_dim, size=num_points)
+        new_candidates = []
+        r_scores = [] 
+        all_rewards = []
+        for pref in prefs:
+            cond_var, (_, beta) = self._get_condition_var(prefs=pref, train=False, bs=self.num_samples)
+            samples, _ = self.sample(self.num_samples, cond_var, train=False)
+            rewards = task.score(samples)
+            r = self.process_reward(samples, pref, task, rewards=rewards, train=False)
+            
+            new_candidates.extend(samples)
+            all_rewards.extend(rewards)
+            r_scores.extend(r.cpu())
+        r_scores = np.array(r_scores)
+        all_rewards = np.array(all_rewards)
+        new_candidates = np.array(new_candidates)
+        pareto_candidates, pareto_targets = pareto_frontier(new_candidates, all_rewards,maximize=True)
+        return new_candidates, all_rewards, r_scores, pareto_candidates, pareto_targets, prefs
 
     def val_step(self, batch_size):
         overall_loss = 0.
@@ -288,6 +336,7 @@ class MOGFN(BaseAlgorithm):
             if not train:
                 prefs = self.simplex[0]
             else:
+                # prefs=np.array(random.choice([[0.0, 0.0, 1.0], [0.0, 1.0, 0.0], [1.0, 0.0, 0.0]]))
                 prefs = np.random.dirichlet([self.pref_alpha]*self.obj_dim)
         if beta is None:
             if train:
