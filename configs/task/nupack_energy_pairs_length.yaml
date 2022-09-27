@@ -1,4 +1,5 @@
-_target_: torch_seq_moo.tasks.nupack.NupackTask
+defaults:
+  - nupack
 objectives:
   - energy
   - pairs
@@ -11,12 +12,3 @@ score_max:
   - 60
   - 30
   - 1.0
-regex_list: !!null
-min_len: 30
-max_len: 60
-num_start_examples: 512
-batch_size: 16
-max_num_edits: null
-max_ngram_size: 1
-allow_len_change: True
-max_score_per_dim: 16
