@@ -27,7 +27,7 @@ gen_clip: 10
 encoder_obj: mlm
 sample_beta: 4
 simplex_bins: 10
-eval_freq: 100
+eval_freq: 500
 k: 10
 num_samples: 128
 unnormalize_rewards: False
