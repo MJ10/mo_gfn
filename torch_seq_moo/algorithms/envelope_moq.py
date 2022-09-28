@@ -33,6 +33,7 @@ class EnvelopeMOQ(BaseAlgorithm):
         self.max_len = cfg.max_len
         self.min_len = cfg.min_len
         self.obj_dim = self.task.obj_dim
+        cfg.model.num_obj = self.obj_dim
         # EMOQ stuff
         self.train_steps = cfg.train_steps
         self.epsilon = cfg.random_action_prob

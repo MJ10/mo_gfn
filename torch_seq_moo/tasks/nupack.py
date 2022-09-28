@@ -20,8 +20,8 @@ class NupackTask(BaseTask):
         transform=lambda x: x,
         **kwargs
     ):
-        obj_dim = len(objectives)
-        super().__init__(tokenizer, obj_dim, max_len, transform, **kwargs)
+        self.obj_dim = len(objectives)
+        super().__init__(tokenizer, self.obj_dim, max_len, transform, **kwargs)
         self.regex_list = None
         self.min_len = min_len
         self.max_len = max_len
