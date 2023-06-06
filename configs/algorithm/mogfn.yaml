@@ -36,6 +36,7 @@ use_eval_pref: False
 state_save_path: "/home/mila/m/moksh.jain/mo_gfn/test.pkl.gz"
 num_pareto_points: 500
 pareto_freq: 500
+unnormalize_rewards: False
 
 model:
   _target_: torch_seq_moo.algorithms.mogfn_utils.conditional_transformer.CondGFNTransformer
@@ -47,3 +48,4 @@ model:
   num_head: 8
   bidirectional: False
   dropout: 0
+  batch_size: 128

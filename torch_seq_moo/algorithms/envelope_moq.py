@@ -22,8 +22,8 @@ from collections import namedtuple, deque
 
 
 class EnvelopeMOQ(BaseAlgorithm):
-    def __init__(self, cfg, tokenizer, task_cfg, **kwargs):
-        super(EnvelopeMOQ, self).__init__(cfg, tokenizer, task_cfg)
+    def __init__(self, cfg, task, tokenizer, task_cfg, **kwargs):
+        super(EnvelopeMOQ, self).__init__(cfg, task, tokenizer, task_cfg)
         self.setup_vars(kwargs)
         self.init_policy()
 
@@ -32,7 +32,7 @@ class EnvelopeMOQ(BaseAlgorithm):
         # Task stuff
         self.max_len = cfg.max_len
         self.min_len = cfg.min_len
-        self.obj_dim = self.task_cfg.obj_dim
+        self.obj_dim = self.task.obj_dim
         # EMOQ stuff
         self.train_steps = cfg.train_steps
         self.epsilon = cfg.random_action_prob

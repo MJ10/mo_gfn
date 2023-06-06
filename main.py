@@ -65,6 +65,7 @@ def main(config):
             logging.info("Initializing Algorithm")
             algorithm = hydra.utils.instantiate(
                 config.algorithm,
+                task=task,
                 tokenizer=tokenizer,
                 cfg=config.algorithm,
                 task_cfg=config.task

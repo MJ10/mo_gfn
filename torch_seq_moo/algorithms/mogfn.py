@@ -19,8 +19,8 @@ from tqdm import tqdm
 
 
 class MOGFN(BaseAlgorithm):
-    def __init__(self, cfg, tokenizer, task_cfg, **kwargs):
-        super(MOGFN, self).__init__(cfg, tokenizer, task_cfg)
+    def __init__(self, cfg, task, tokenizer, task_cfg, **kwargs):
+        super(MOGFN, self).__init__(cfg, task, tokenizer, task_cfg)
         self.setup_vars(kwargs)
         self.init_policy()
 
@@ -30,7 +30,7 @@ class MOGFN(BaseAlgorithm):
         # Task stuff
         self.max_len = cfg.max_len
         self.min_len = cfg.min_len
-        self.obj_dim = self.task_cfg.obj_dim
+        self.obj_dim = self.task.obj_dim
         # GFN stuff
         self.train_steps = cfg.train_steps
         self.random_action_prob = cfg.random_action_prob
@@ -65,6 +65,10 @@ class MOGFN(BaseAlgorithm):
         self.eos_char = "[SEP]"
         self.pad_tok = self.tokenizer.convert_token_to_id("[PAD]")
         self.simplex = generate_simplex(self.obj_dim, cfg.simplex_bins)
+        self.unnormalize_rewards = cfg.unnormalize_rewards
+        # Adapt model config to task
+        self.cfg.model.vocab_size = len(self.tokenizer.full_vocab)
+        self.cfg.model.num_actions = len(self.tokenizer.non_special_vocab) + 1
 
     def get_eval_pref(self):
         rs = np.random.RandomState(123)
@@ -123,6 +127,8 @@ class MOGFN(BaseAlgorithm):
                         pareto_front=fig
                     ), commit=False)
                 table = wandb.Table(columns = ["Sequence", "Rewards", "Prefs"])
+                if self.unnormalize_rewards:
+                    all_rews *= task.score_max
                 for sample, rew, pref in zip(samples, all_rews, self.simplex):
                     table.add_data(str(sample), str(rew), str(pref))
                 self.log({"generated_seqs": table})
@@ -330,8 +336,7 @@ class MOGFN(BaseAlgorithm):
             if not train:
                 prefs = self.simplex[0]
             else:
-                # prefs=np.array(random.choice([[0.0, 0.0, 1.0], [0.0, 1.0, 0.0], [1.0, 0.0, 0.0]]))
-                prefs = np.random.dirichlet([self.pref_alpha]*self.obj_dim)
+                prefs = np.random.dirichlet(np.array(self.pref_alpha))
         if beta is None:
             if train:
                 beta = float(np.random.randint(1, self.beta_max+1)) if self.beta_cond else self.sample_beta
