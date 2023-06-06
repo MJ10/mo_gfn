@@ -1,15 +1,10 @@
 from setuptools import setup
 import os
-import sys
 
 _here = os.path.abspath(os.path.dirname(__file__))
 
-if sys.version_info[0] < 3:
-    with open(os.path.join(_here, "README.md")) as f:
-        long_description = f.read()
-else:
-    with open(os.path.join(_here, "README.md"), encoding="utf-8") as f:
-        long_description = f.read()
+with open(os.path.join(_here, "README.md"), encoding="utf-8") as f:
+    long_description = f.read()
 
 desc = "Multi-Objective Optimization with PyTorch" 
 
@@ -24,10 +19,17 @@ setup(
     url="https://github.com/mj10/torch_seq_moo.git",
     license="MIT",
     packages=["torch_seq_moo"],
-    include_package_data=True,
-    classifiers=[
-        "Development Status :: 3",
-        "Intended Audience :: Science/Research",
-        "Programming Language :: Python :: 3.7",
+    install_requires=[
+        'torch==2.0.0',
+        'botorch==0.8.4',
+        'hydra-core==1.3.2',
+        'wandb',
+        'matplotlib',
+        'polyleven',
+        'pymoo==0.5.0',
+        'tqdm',
+        'cachetools',
+        'cvxopt==1.3.0'
     ],
+    include_package_data=True
 )

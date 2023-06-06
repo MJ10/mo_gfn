@@ -214,7 +214,7 @@ class MOGFN(BaseAlgorithm):
         elif self.reward_type == "logconvex":
             log_r = (torch.tensor(prefs) * torch.tensor(rewards).clamp(min=self.reward_min).log()).sum(axis=1)
         elif self.reward_type == "tchebycheff":
-            log_r = (torch.tensor(prefs) * torch.tensor(rewards).clamp(min=self.reward_min).log()).sum(axis=1)
+            log_r = (torch.tensor(prefs) * torch.abs(1 - torch.tensor(rewards))).min(axis=1)[0].clamp(min=self.reward_min).log()
         return log_r.exp() if not train else log_r
 
     def evaluation(self, task, plot=False):
