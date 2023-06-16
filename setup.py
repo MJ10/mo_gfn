@@ -29,7 +29,8 @@ setup(
         'pymoo==0.5.0',
         'tqdm',
         'cachetools',
-        'cvxopt==1.3.0'
+        'cvxopt==1.3.0',
+        'plotly'
     ],
     include_package_data=True
 )

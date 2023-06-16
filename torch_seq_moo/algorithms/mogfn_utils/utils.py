@@ -22,15 +22,19 @@ def thermometer(v, n_bins=50, vmin=0, vmax=32):
     gap = bins[1] - bins[0]
     return (v[..., None] - bins.reshape((1,) * v.ndim + (-1,))).clamp(0, gap.item()) / gap
 
-def plot_pareto(pareto_rewards, all_rewards, pareto_only=False):
+def plot_pareto(pareto_rewards, all_rewards, pareto_only=False, objective_names=None):
     if pareto_rewards.shape[-1] < 3:
         fig = plt.figure()
         ax = fig.add_subplot(111)
         if not pareto_only:
             ax.scatter(*np.hsplit(all_rewards, all_rewards.shape[-1]), color="grey", label="All Samples")
         ax.scatter(*np.hsplit(pareto_rewards, pareto_rewards.shape[-1]), color="red", label="Pareto Front")
-        ax.set_xlabel("Reward 1")
-        ax.set_ylabel("Reward 2")
+        if objective_names is not None:
+            ax.set_xlabel(objective_names[0])
+            ax.set_ylabel(objective_names[1])
+        else:
+            ax.set_xlabel("Reward 1")
+            ax.set_ylabel("Reward 2")
         ax.legend()
         return wandb.Image(fig)
     if pareto_rewards.shape[-1] == 3:
@@ -51,6 +55,14 @@ def plot_pareto(pareto_rewards, all_rewards, pareto_only=False):
             marker_color="red",
             name="Pareto Front"
         )])
+        if objective_names is not None:
+            fig.update_layout(
+                scene = dict(
+                    xaxis_title=objective_names[0],
+                    yaxis_title=objective_names[1],
+                    zaxis_title=objective_names[2],
+                )
+            )
         fig.update_traces(marker=dict(size=8),
                   selector=dict(mode='markers'))
         return fig

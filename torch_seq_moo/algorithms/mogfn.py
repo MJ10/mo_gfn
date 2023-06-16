@@ -193,13 +193,14 @@ class MOGFN(BaseAlgorithm):
                 if t == 0:
                     traj_logprob += self.model.Z(cond_var)
 
-            cat = Categorical(logits=logits / self.sampling_temp)
-            actions = cat.sample()
+            sampling_dist = Categorical(logits=logits / self.sampling_temp)
+            policy_dist = Categorical(logits=logits)
+            actions = sampling_dist.sample()
             if train and self.random_action_prob > 0:
                 uniform_mix = torch.bernoulli(uniform_pol).bool()
                 actions = torch.where(uniform_mix, torch.randint(int(t <= self.min_len), logits.shape[1], (episodes, )).to(self.device), actions)
             
-            log_prob = cat.log_prob(actions) * active_mask
+            log_prob = policy_dist.log_prob(actions) * active_mask
             traj_logprob += log_prob
 
             actions_apply = torch.where(torch.logical_not(active_mask), torch.zeros(episodes).to(self.device).long(), actions + 4)
@@ -220,7 +221,7 @@ class MOGFN(BaseAlgorithm):
         elif self.reward_type == "logconvex":
             log_r = (torch.tensor(prefs) * torch.tensor(rewards).clamp(min=self.reward_min).log()).sum(axis=1)
         elif self.reward_type == "tchebycheff":
-            log_r = (torch.tensor(prefs) * torch.abs(1 - torch.tensor(rewards))).min(axis=1)[0].clamp(min=self.reward_min).log()
+            log_r = (torch.tensor(prefs) * torch.abs(1 - torch.tensor(rewards))).max(axis=1)[0].clamp(min=self.reward_min).log()
         return log_r.exp() if not train else log_r
 
     def evaluation(self, task, plot=False):
@@ -279,7 +280,8 @@ class MOGFN(BaseAlgorithm):
             pareto_candidates, pareto_targets = pareto_frontier(new_candidates, all_rewards, maximize=True)
             
             mo_metrics = get_all_metrics(pareto_targets, self.eval_metrics, hv_ref=self._ref_point, r2_prefs=self.simplex, num_obj=self.obj_dim)
-            fig = plot_pareto(pareto_targets, all_rewards, pareto_only=False) if plot else None        
+            obj_names = self.task_cfg.objectives if hasattr(self.task_cfg, "objectives") else [f"obj_{i}" for i in range(self.obj_dim)]
+            fig = plot_pareto(pareto_targets, all_rewards, pareto_only=False, objective_names=obj_names) if plot else None        
         else:
             mo_metrics = {met: 0 for met in self.eval_metrics}
             fig = None
