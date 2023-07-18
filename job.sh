@@ -6,9 +6,8 @@
 #SBATCH --time=8:00:00                        # The job will run for 3 hours
 #SBATCH -o /network/scratch/m/moksh.jain/logs/torchseqmoo-%j.out  # Write the log on tmp1
 
-module load python/3.10 cuda/11.7
+module load python/3.9 cuda/11.7
 export PYTHONUNBUFFERED=1
-export HF_HOME=/home/mila/m/moksh.jain/scratch/hf
 
 cd $SLURM_TMPDIR
 virtualenv env
@@ -19,14 +18,4 @@ export PATH=$PATH:$(pwd)
 cd ~/mo_gfn
 pip install -e .
 
-cd ~/bioseq_libs/developability-oracle
-pip install .
-
-cd ~/bioseq_libs/mhc2-oracle
-pip install .
-
-cd ~/bioseq_libs/lmmarginal-oracle
-pip install .
-
-cd ~/mo_gfn
 python main.py "$@"
